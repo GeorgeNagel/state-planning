@@ -40,8 +40,6 @@ class ImpossibleException(Exception):
 
 class Kill(Action):
     name = 'kill'
-    num_subjects = 1
-    num_objects = 1
 
     def apply(self, state_dict):
         # Check preconditions

@@ -16,7 +16,6 @@ class State(object):
         return self._state_string
 
     def as_dict(self):
-        print "STATE STRING: %s" % self._state_string
         return json.loads(self._state_string)
 
     def __setattr__(self, name, value):
@@ -30,7 +29,7 @@ class State(object):
         return "<State: %s>" % self.__str__()
 
     def __str__(self):
-        return self._state
+        return self._state_string
 
     def __unicode__(self):
         return self.__str__()
