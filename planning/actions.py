@@ -42,17 +42,17 @@ class Kill(Action):
     name = 'kill'
 
     def apply(self, state_dict):
-        for character in state_dict['characters']:
-            if character['name'] in self.subjects:
-                if character['alive'] is False:
-                    raise ImpossibleException('A dead person cannot kill')
-        for character in state_dict['characters']:
-            if character['name'] in self.objects:
-                if character['alive'] is False:
-                    raise ImpossibleException('A dead person cannot be killed')
-        for character in state_dict['characters']:
-            if character['name'] in self.objects:
-                character['alive'] = False
+        # Check preconditions
+        for character_key in self.subjects:
+            if not state_dict['characters'][character_key]['alive']:
+                raise ImpossibleException('A dead person cannot kill')
+        for character_key in self.objects:
+            if not state_dict['characters'][character_key]['alive']:
+                raise ImpossibleException('A dead person cannot be killed')
+
+        # Modify state
+        for character_key in self.objects:
+            state_dict['characters'][character_key]['alive'] = False
         return state_dict
 
 

@@ -2,14 +2,18 @@ import json
 
 
 class State(object):
-    _state = ""
+    _state_string = ""
 
     def __init__(self, state_string):
         super(State, self).__setattr__("_state", state_string)
 
     @property
-    def state(self):
-        return self._state
+    def as_string(self):
+        return self._state_string
+
+    @property
+    def as_dict(self):
+        return self._state_string
 
     def __setattr__(self, name, value):
         raise AttributeError("State cannot be modified.")
