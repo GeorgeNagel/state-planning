@@ -1,0 +1,37 @@
+for possible_actors in characters:
+
+action1, action2, newframeforcharacter1=nf1, nf2
+
+max seq length = 3
+    
+
+A[action1] B[action2] C[nf1] D[nf2]
+
+
+A1[action1, action2] A2[action1, nf1], A3[action1, nf2]
+
+B1[action2, action1] B2[action2, nf1], B3[action2, nf2]
+
+C1[nf1<action1>] C2[nf1<action2>] C3[nf1<nf2>]
+
+D1[nf2<action1>] D2[nf2<action2>] D3[nf2<nf1>]
+
+A1a[action1, action2, action1] A1b[action1, action2, action2] A1c[action1, action2, nf1] A1d[action1, action2, nf2]
+A2a[action1, nf1<action1>] A2b[action1, nf1<action2>] A2c[action1, nf1<nf2>]
+A3a[action1, nf2<action1>] A3b[action1, nf2<action2>] A3c[action1, nf2<nf1>]
+
+B1a[action2, action1, action1] B1b[action2, action1, action2] B1c[action2, action1, nf1] B1d[action2, action1, nf2]
+B2a[action2, nf1<action1>] B2b[action2, nf1<action2>] B2c[action2, nf1<nf2>]
+B3a[action2, nf2<action1>] B3b[action2, nf2<action2>] B3c[action2, nf2<nf1>]
+
+C1a[nf1<action1, action2>] C1b[nf1<action1, nf2>] C1c[nf1<action1>action2] C1d[nf1<action1>nf2]
+C2a[nf1<action2, action1>] C2b[nf1<action2, nf2>]
+
+
+serialize as
+
+[action-name(object), new-frame(new_subject), end-frame()]
+
+                    [convince(carol), end-frame()]
+-> next iteration = [convince(carol), kill(bob), end-frame()]
+                    [convince(carol), kill(bob), end-frame(), kill(carol)]

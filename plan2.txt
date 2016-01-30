@@ -1,0 +1,126 @@
+plan algorithm
+
+actions kill, convince
+
+validation_function(state):
+    if state['ken']['alive'] is False:
+        return True
+    return False
+
+alice wants to kill bob
+alice can convince carol to do things
+alice cannot kill bob directly
+alice cannot convince bob
+carol can kill bob
+
+start plan
+alice's plan 1
+[
+
+]
+
+
+alice's plan 1
+[
+    kill(alice, bob)
+]
+! impossible (alice can't kill bob)
+
+
+alice's plan 2
+[
+    kill(alice, carol)
+]
+
+alice's plan 2
+[
+    kill(alice, carol)
+    kill(alice, bob)
+]
+! impossible (alice can't kill bob)
+
+alice's plan 2
+[
+    kill(alice, carol)
+    convince(carol)
+    carol's plan 1
+    [
+
+    ]
+]
+!impossible (carol is dead)
+
+alice's plan 3
+[
+    convince(bob)
+    bob's plan 1
+    [
+
+    ]
+]
+!impossible (alice can't convince bob)
+
+alice's plan 4
+[
+    convince(carol)
+    carol's plan 2
+    [
+
+    ]
+]
+
+alice's plan 4
+[
+    convince(carol)
+    carol's plan 2
+    [
+        kill(carol, bob)
+    ]
+]
+~successful, return as a successful solution
+
+alice's plan 4.1
+[
+    convince(carol)
+    carol's plan 2
+    [
+        kill(carol, bob)
+        convince(carol, bob)
+        bob's plan 2
+        [
+
+        ]
+    ]
+]
+!impossible (bob is dead)
+
+alice's plan 4.2
+[
+    convince(carol)
+    carol's plan 2
+    [
+        kill(carol, bob)
+        kill(carol, alice)
+    ]
+]
+
+alice's plan 4.3
+[
+    convince(carol)
+    carol's plan 2
+    [
+        kill(carol, bob)
+    ]
+    kill(alice, carol)
+]
+
+
+alice's plan (kill everybody): [
+    convince(carol,
+    [
+        kill(carol, bob)
+    ]),
+    kill(alice, carol),
+    kill(alice, alice)
+]
+
