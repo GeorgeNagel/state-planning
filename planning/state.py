@@ -11,7 +11,6 @@ class State(object):
     def __init__(self, state_string):
         super(State, self).__setattr__("_state_string", state_string)
 
-    @property
     def as_string(self):
         return self._state_string
 
@@ -46,7 +45,7 @@ class StateHistory(object):
     def __init__(self, initial_state=None):
         self._history = []
         if initial_state:
-            self._history.append(initial_state._state)
+            self._history.append(initial_state.as_string())
 
     def pretty(self):
         """ A pretty-printable representation of the state history. """
@@ -70,5 +69,5 @@ class StateHistory(object):
         # Keep track of the actions as well as the states they transition to/from
         current_state = self._history[-1]
         new_state = action.apply(json.loads(current_state))
-        self._history.append(json.dumps(action.to_json()))
+        self._history.append(json.dumps(action.as_dict()))
         self._history.append(json.dumps(new_state))
