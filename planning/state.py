@@ -4,16 +4,20 @@ import json
 class State(object):
     _state_string = ""
 
+    @classmethod
+    def from_dict(cls, state_dict):
+        return cls(json.dumps(state_dict, sort_keys=True))
+
     def __init__(self, state_string):
-        super(State, self).__setattr__("_state", state_string)
+        super(State, self).__setattr__("_state_string", state_string)
 
     @property
     def as_string(self):
         return self._state_string
 
-    @property
     def as_dict(self):
-        return self._state_string
+        print "STATE STRING: %s" % self._state_string
+        return json.loads(self._state_string)
 
     def __setattr__(self, name, value):
         raise AttributeError("State cannot be modified.")
@@ -30,6 +34,11 @@ class State(object):
 
     def __unicode__(self):
         return self.__str__()
+
+    def apply_action(self, action):
+        """ Apply an action to this state, return a new State. """
+        new_state_dict = action.apply(self.as_dict())
+        return State.from_dict(new_state_dict)
 
 
 class StateHistory(object):

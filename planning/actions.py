@@ -19,7 +19,7 @@ class Action(object):
         else:
             self.objects = []
 
-    def to_json(self):
+    def as_dict(self):
         """ Create a json-serializable object representing this action instance. """
         return {
             "name": self.name,
@@ -31,7 +31,7 @@ class Action(object):
         return "<Action: %s>" % self.__str__()
 
     def __str__(self):
-        return json.dumps(self.to_json(), sort_keys=True)
+        return json.dumps(self.as_dict(), sort_keys=True)
 
 
 class ImpossibleException(Exception):
@@ -40,6 +40,8 @@ class ImpossibleException(Exception):
 
 class Kill(Action):
     name = 'kill'
+    num_subjects = 1
+    num_objects = 1
 
     def apply(self, state_dict):
         # Check preconditions
