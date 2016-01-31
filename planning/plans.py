@@ -2,10 +2,15 @@ import json
 
 from planning.actions import Convince, EndConvince, ImpossibleActionException
 
-MAX_PLAN_DEPTH = 10
+MAX_PLAN_DEPTH = 5
 
 
-class ImpossiblePlanException(Exception):
+class ImpossiblePlanSearchException(Exception):
+    pass
+
+
+class InvalidPlanException(Exception):
+    """ A plan contains a sequence of instructions which are invalid. """
     pass
 
 # def plan_search(agent_key_stack, state, action_classes, goal_verify_fn, plan=None, convince=True):
@@ -52,42 +57,71 @@ def plan_search(agent_key_stack, initial_state, action_classes, goal_verify_fn, 
     agent_key_stack => A list of character keys with the character of the current frame in front.
     convince => allow characters to convince each-other.
     """
-    # Check if already satisfied:
+    # Check if already satisfied
     if goal_verify_fn(initial_state):
         return None
 
+    # Create new branches of plans from each plan
+    if convince:
+        action_classes += [Convince, EndConvince]
+
     if plans is None:
+        # Create the initial set of plans
         plans = []
         agent_key = agent_key_stack[-1]
         for action_cls in action_classes:
+            # Can't start with EndConvince
+            if action_cls is EndConvince:
+                continue
             for character_key in initial_state.as_dict()['characters']:
                 action = action_cls([agent_key], [character_key])
                 plan = Plan(actions=[action])
                 plans.append(plan)
     elif len(plans[0].actions) >= MAX_PLAN_DEPTH:
-        raise ImpossiblePlanException
+        raise ImpossiblePlanSearchException
 
     # Check if any plans found so far complete the goal
-    for plan in plans:
-        states = [initial_state]
-        for action in plan.actions:
-            new_state = states[-1].apply_action(action)
-            states.append(new_state)
-        final_state = states[-1]
-        goal_reached = goal_verify_fn(final_state)
-        if goal_reached:
-            return plan
+    for plan in plans[:]:
+        try:
+            states = [initial_state]
+            for action in plan.actions:
+                new_state = states[-1].apply_action(action)
+                states.append(new_state)
+            final_state = states[-1]
+            goal_reached = goal_verify_fn(final_state)
+            all_subplans_finished = len(plan.get_agent_stack(agent_key_stack)) == len(agent_key_stack)
+            if goal_reached and all_subplans_finished:
+                return plan
+        except ImpossibleActionException:
+            # Remove this plan, because it's not helpful
+            plans.remove(plan)
 
-    # Create new branches of plans from each plan
+    if not plans:
+        # No possible actions can be taken
+        raise ImpossiblePlanSearchException()
+
     new_plans = []
     for plan in plans:
         # Create new following plans
-        agent_key = agent_key_stack[-1]
+        plan_agent_stack = plan.get_agent_stack(agent_key_stack)
         for action_cls in action_classes:
-            for character_key in initial_state.as_dict()['characters']:
-                action = action_cls([agent_key], [character_key])
+            if action_cls is EndConvince:
+                # Special handling for wrapping up subplans
+                if len(plan.get_agent_stack(agent_key_stack)) == 1:
+                    # Cannot endconvince. There is no active subplan
+                    continue
+                # Only one valid object-subject pair
+                object_key = plan_agent_stack[-1]
+                subject_key = plan_agent_stack[-2]
+                action = action_cls([subject_key], [object_key])
                 new_plan = plan.add_action(action)
                 new_plans.append(new_plan)
+            else:
+                agent_key = plan_agent_stack[-1]
+                for character_key in initial_state.as_dict()['characters']:
+                    action = action_cls([agent_key], [character_key])
+                    new_plan = plan.add_action(action)
+                    new_plans.append(new_plan)
 
     return plan_search(agent_key_stack, initial_state, action_classes, goal_verify_fn, plans=new_plans, convince=convince)  # noqa
 
@@ -108,3 +142,12 @@ class Plan(object):
     def add_action(self, action):
         actions = self.actions + [action]
         return Plan(actions)
+
+    def get_agent_stack(self, initial_agent_stack):
+        return_agent_stack = initial_agent_stack[:]
+        for action in self.actions:
+            if isinstance(action, Convince):
+                return_agent_stack.append(action.objects[0])
+            elif isinstance(action, EndConvince):
+                return_agent_stack.pop(-1)
+        return return_agent_stack

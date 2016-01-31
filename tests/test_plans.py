@@ -1,8 +1,8 @@
 from unittest import TestCase
 
-from planning.actions import Kill, Action, ImpossibleActionException
+from planning.actions import Kill, Action, ImpossibleActionException, Convince, EndConvince
 from planning.goals import dead_goal_factory
-from planning.plans import plan_search, Plan, ImpossiblePlanException
+from planning.plans import plan_search, Plan, ImpossiblePlanSearchException
 from planning.state import State
 
 
@@ -44,6 +44,14 @@ class TestSimplePlan(TestCase):
                 Kill(['bob'], ['bob'])
             ]))
         )
+
+    def test_impossible_action(self):
+        class Impossible(Action):
+            def apply(self, state_dict):
+                raise ImpossibleActionException()
+        with self.assertRaises(ImpossiblePlanSearchException):
+            # The plan should not raise an ImpossibleActionException
+            plan_search(['bob'], self.state, [Impossible], self.goal_fn, convince=False)
 
 
 class TestMultiStepPlan(TestCase):
@@ -92,7 +100,7 @@ class TestMultiStepPlan(TestCase):
             state_dict = state.as_dict()
             return state_dict['characters']['alice']['toes'] <= 7
 
-        with self.assertRaises(ImpossiblePlanException):
+        with self.assertRaises(ImpossiblePlanSearchException):
             plan_search(['alice'], self.state, [self.action], too_few_toes)
 
 
@@ -119,19 +127,13 @@ class TestConvincePlan(TestCase):
             name = 'give money'
 
             def apply(self, state_dict):
-                for character_key in self.objects:
+                for character_key in self.subjects:
                     if not state_dict['characters'][character_key]['has_money']:
                         raise ImpossibleActionException()
-                for character_key in self.objects:
-                    state_dict['characters'][character_key]['has_money'] = False
                 for character_key in self.subjects:
+                    state_dict['characters'][character_key]['has_money'] = False
+                for character_key in self.objects:
                     state_dict['characters'][character_key]['has_money'] = True
-                return state_dict
-
-        class Convince(Action):
-            name = 'convince'
-
-            def apply(self, state_dict):
                 return state_dict
 
         # Create the goal verification function
@@ -141,23 +143,41 @@ class TestConvincePlan(TestCase):
 
         self.goal_fn = carol_has_money
         self.give_money = GiveMoney
-        self.convince = Convince
         self.state = state
 
     def test_convince_plan(self):
         """ Test finding a plan where somebody must be convinced to perform an action. """
-        plan = plan_search(['alice'], self.state, [self.give_money, self.convince], self.goal_fn)
+        plan = plan_search(['alice'], self.state, [self.give_money], self.goal_fn)
         self.assertEqual(
             str(plan),
             str(Plan(actions=[
-                self.convince(
-                    ['alice'], ['bob'],
-                    Plan(actions=[self.give_money(['bob'], ['carol'])])
-                ),
-            ])),
-            str(Plan(actions=[
-                self.convince(['alice'], ['bob']),
+                Convince(['alice'], ['bob']),
                 self.give_money(['bob'], ['carol']),
-                self.end_convince(['alice'], ['bob'])
+                EndConvince(['alice'], ['bob'])
             ]))
+        )
+
+
+class TestPlan(TestCase):
+    def test_get_agent_stack_complete(self):
+        plan = Plan(actions=[
+            Convince(['alice'], ['bob']),
+            Kill(['bob'], ['carol']),
+            EndConvince('alice', 'bob')
+        ])
+        agent_stack = plan.get_agent_stack(['alice'])
+        self.assertEqual(
+            agent_stack,
+            ['alice']
+        )
+
+    def test_get_agent_stack_partial(self):
+        plan = Plan(actions=[
+            Convince(['alice'], ['bob']),
+            Kill(['bob'], ['carol']),
+        ])
+        agent_stack = plan.get_agent_stack(['alice'])
+        self.assertEqual(
+            agent_stack,
+            ['alice', 'bob']
         )

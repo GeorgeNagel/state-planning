@@ -34,13 +34,23 @@ class Action(object):
         return json.dumps(self.as_dict(), sort_keys=True)
 
 
-class Convince(object):
+class Convince(Action):
+    name = "convince"
+
     def apply(self, state_dict):
+        # Check if any subjects are trying to convince themselves
+        if (set(self.subjects).intersection(set(self.objects))):
+            raise ImpossibleActionException()
         return state_dict
 
 
-class EndConvince(object):
+class EndConvince(Action):
+    name = "end convince"
+
     def apply(self, state_dict):
+        # Check if any subjects are trying to convince themselves
+        if (set(self.subjects).intersection(set(self.objects))):
+            raise ImpossibleActionException()
         return state_dict
 
 
