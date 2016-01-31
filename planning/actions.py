@@ -34,7 +34,17 @@ class Action(object):
         return json.dumps(self.as_dict(), sort_keys=True)
 
 
-class ImpossibleException(Exception):
+class Convince(object):
+    def apply(self, state_dict):
+        return state_dict
+
+
+class EndConvince(object):
+    def apply(self, state_dict):
+        return state_dict
+
+
+class ImpossibleActionException(Exception):
     pass
 
 
@@ -45,21 +55,12 @@ class Kill(Action):
         # Check preconditions
         for character_key in self.subjects:
             if not state_dict['characters'][character_key]['alive']:
-                raise ImpossibleException('A dead person cannot kill')
+                raise ImpossibleActionException('A dead person cannot kill')
         for character_key in self.objects:
             if not state_dict['characters'][character_key]['alive']:
-                raise ImpossibleException('A dead person cannot be killed')
+                raise ImpossibleActionException('A dead person cannot be killed')
 
         # Modify state
         for character_key in self.objects:
             state_dict['characters'][character_key]['alive'] = False
         return state_dict
-
-
-class Convince(Action):
-    # Change the planning frame from the action's subject to the action's object
-    name = 'convince'
-
-    def apply():
-        # changes the planning frame
-        pass
